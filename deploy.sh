@@ -3,7 +3,6 @@ set -e
 
 SERVER="root@45.149.172.181"
 KEY="$HOME/.ssh/anycourse_key"
-APP_DIR="/opt/airwaves"
 
 echo "Deploying airwaves.fm to production..."
 
@@ -23,6 +22,11 @@ git push origin main 2>&1 | tail -3
 echo "Deploying on server..."
 ssh -i "$KEY" -o StrictHostKeyChecking=no "$SERVER" bash -s << 'REMOTE'
 cd /opt/airwaves
+
+# Stop PM2 BEFORE pulling — prevents crash loop from missing .next
+echo "  Stopping app..."
+pm2 stop airwaves 2>/dev/null || true
+
 echo "  Pulling latest..."
 git fetch origin 2>&1 | tail -3
 git reset --hard origin/main 2>&1 | tail -1
@@ -33,11 +37,12 @@ npm install 2>&1 | tail -2
 
 echo "  Building..."
 if ! npm run build 2>&1 | tail -5; then
-  echo "  Remote build failed — keeping previous version running"
+  echo "  Remote build failed — restarting previous version"
+  pm2 restart airwaves --update-env 2>&1 | tail -3
   exit 1
 fi
 
-echo "  Restarting app..."
+echo "  Starting app..."
 pm2 restart airwaves --update-env 2>&1 | tail -3
 
 # Health check with retry

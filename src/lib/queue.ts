@@ -249,23 +249,31 @@ class QueueManager {
 
   /**
    * Background generation to grow the catalog (non-blocking).
+   * Retries up to 3 times if generation fails (e.g. safety filter).
    */
   private generateInBackground(stationId: string): void {
     const queue = this.queues.get(stationId);
     if (!queue || queue.generating) return;
 
-    // Generate one new track in the background
     queue.generating = true;
-    this.generateForStation(queue)
-      .then(() => {
+
+    const attempt = async (retries: number): Promise<void> => {
+      try {
+        await this.generateForStation(queue);
         console.log(`[queue] ${stationId}: background generation complete, catalog now ${queue.r2TrackIds.length} tracks`);
-      })
-      .catch((err) => {
-        console.error(`[queue] Background generation failed for ${stationId}:`, err);
-      })
-      .finally(() => {
-        queue.generating = false;
-      });
+      } catch (err) {
+        if (retries > 0) {
+          console.log(`[queue] ${stationId}: generation failed, retrying (${retries} left)...`);
+          await new Promise((r) => setTimeout(r, 3000));
+          return attempt(retries - 1);
+        }
+        console.error(`[queue] Background generation failed for ${stationId} after all retries:`, err);
+      }
+    };
+
+    attempt(3).finally(() => {
+      queue.generating = false;
+    });
   }
 
   private async refillQueue(stationId: string): Promise<void> {
