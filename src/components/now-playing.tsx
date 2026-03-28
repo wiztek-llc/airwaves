@@ -13,7 +13,7 @@ interface NowPlayingProps {
   title?: string;
   artist?: string;
   coverUrl?: string;
-  frequencyData: Uint8Array;
+  getFrequencyData: () => Uint8Array;
 }
 
 export function NowPlaying({
@@ -25,7 +25,7 @@ export function NowPlaying({
   title,
   artist,
   coverUrl,
-  frequencyData,
+  getFrequencyData,
 }: NowPlayingProps) {
   const hasCover = coverUrl && trackNumber > 0;
 
@@ -111,7 +111,7 @@ export function NowPlaying({
         <Visualizer
           isPlaying={isPlaying}
           color={station.color}
-          frequencyData={frequencyData}
+          getFrequencyData={getFrequencyData}
         />
 
         {/* Status */}

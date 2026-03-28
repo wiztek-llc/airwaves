@@ -5,13 +5,25 @@ import { useRef, useEffect } from "react";
 interface VisualizerProps {
   isPlaying: boolean;
   color: string;
-  frequencyData: Uint8Array;
+  /** Call this to get current frequency data — reads from the AnalyserNode directly */
+  getFrequencyData: () => Uint8Array;
 }
 
-export function Visualizer({ isPlaying, color, frequencyData }: VisualizerProps) {
+export function Visualizer({ isPlaying, color, getFrequencyData }: VisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
+  // Store props in refs so the draw loop always has current values
+  // without needing to tear down/recreate the loop
+  const isPlayingRef = useRef(isPlaying);
+  const colorRef = useRef(color);
+  const getDataRef = useRef(getFrequencyData);
 
+  // Keep refs in sync with props (no effect teardown)
+  isPlayingRef.current = isPlaying;
+  colorRef.current = color;
+  getDataRef.current = getFrequencyData;
+
+  // Single animation loop — created once, runs forever, reads from refs
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -25,25 +37,31 @@ export function Visualizer({ isPlaying, color, frequencyData }: VisualizerProps)
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
+
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
 
     const draw = () => {
       const rect = canvas.getBoundingClientRect();
       const w = rect.width;
       const h = rect.height;
+      const playing = isPlayingRef.current;
+      const col = colorRef.current;
 
       ctx.clearRect(0, 0, w, h);
 
-      // Number of bars to draw (use a subset of frequency bins)
+      // Get fresh frequency data from the analyzer (no React involved)
+      const frequencyData = getDataRef.current();
+
       const barCount = 48;
       const gap = 3;
       const barWidth = (w - gap * (barCount - 1)) / barCount;
       const maxBarHeight = h * 0.95;
 
       for (let i = 0; i < barCount; i++) {
-        // Map bar index to frequency bin (weight toward lower frequencies)
         const hasData = frequencyData && frequencyData.length > 0;
         const binIndex = hasData
           ? Math.floor(Math.pow(i / barCount, 1.5) * (frequencyData.length - 1))
@@ -51,28 +69,33 @@ export function Visualizer({ isPlaying, color, frequencyData }: VisualizerProps)
         const value = hasData ? (frequencyData[binIndex] || 0) : 0;
         const normalized = value / 255;
 
-        // Center-weighted height envelope
         const centerDistance = Math.abs(i - barCount / 2) / (barCount / 2);
         const envelope = 1 - centerDistance * 0.4;
 
         let barHeight: number;
-        if (isPlaying && normalized > 0.01) {
+        if (playing && normalized > 0.01) {
           barHeight = Math.max(2, normalized * maxBarHeight * envelope);
         } else {
-          // Idle state: tiny bars
           barHeight = 2 + Math.sin(i * 0.3) * 1;
         }
 
         const x = i * (barWidth + gap);
         const y = h - barHeight;
 
-        // Parse hex color and apply opacity
-        const opacity = isPlaying ? 0.3 + normalized * 0.5 : 0.15;
-        ctx.fillStyle = hexToRgba(color, opacity);
+        const opacity = playing ? 0.3 + normalized * 0.5 : 0.15;
+        ctx.fillStyle = hexToRgba(col, opacity);
 
-        // Draw rounded bar
+        // Rounded bar top
         const radius = Math.min(barWidth / 2, 3);
-        roundedRect(ctx, x, y, barWidth, barHeight, radius);
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + barWidth - radius, y);
+        ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
+        ctx.lineTo(x + barWidth, y + h);
+        ctx.lineTo(x, y + h);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
         ctx.fill();
       }
 
@@ -81,14 +104,13 @@ export function Visualizer({ isPlaying, color, frequencyData }: VisualizerProps)
 
     draw();
 
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(canvas);
-
     return () => {
       cancelAnimationFrame(animRef.current);
       resizeObserver.disconnect();
     };
-  }, [isPlaying, color, frequencyData]);
+  // Empty deps — this loop runs once and reads everything from refs
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <canvas
@@ -97,25 +119,6 @@ export function Visualizer({ isPlaying, color, frequencyData }: VisualizerProps)
       style={{ imageRendering: "auto" }}
     />
   );
-}
-
-function roundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x, y + h);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
 }
 
 function hexToRgba(hex: string, alpha: number): string {

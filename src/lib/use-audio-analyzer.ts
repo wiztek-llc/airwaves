@@ -1,32 +1,34 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect } from "react";
 
 const FFT_SIZE = 256;
-const BIN_COUNT = FFT_SIZE / 2; // 128 frequency bins
+const BIN_COUNT = FFT_SIZE / 2;
 
+/**
+ * Audio analyzer that exposes frequency data via a ref (NOT state).
+ * The visualizer reads from the ref in its own rAF loop — zero React re-renders.
+ */
 export function useAudioAnalyzer() {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const rafRef = useRef<number>(0);
   const dataArrayRef = useRef(new Uint8Array(BIN_COUNT));
-  const [frequencyData, setFrequencyData] = useState<Uint8Array>(
-    new Uint8Array(BIN_COUNT)
-  );
+  const connectedRef = useRef(false);
 
   /**
    * Connect an audio element to the analyzer.
-   * Must be called after user interaction (click/tap).
+   * Call after user interaction (click/tap).
    */
   const connectAudio = useCallback((audioElement: HTMLAudioElement) => {
+    if (connectedRef.current) return; // Already connected
+
     // Create AudioContext lazily
     if (!audioCtxRef.current) {
       audioCtxRef.current = new AudioContext();
     }
     const ctx = audioCtxRef.current;
 
-    // Resume if suspended (browser autoplay policy)
     if (ctx.state === "suspended") {
       ctx.resume();
     }
@@ -35,47 +37,44 @@ export function useAudioAnalyzer() {
     if (!analyserRef.current) {
       const analyser = ctx.createAnalyser();
       analyser.fftSize = FFT_SIZE;
-      analyser.smoothingTimeConstant = 0.75;
+      analyser.smoothingTimeConstant = 0.8;
       analyserRef.current = analyser;
     }
 
-    // Connect source only once per audio element
+    // Connect source once
     if (!sourceRef.current) {
       try {
         const source = ctx.createMediaElementSource(audioElement);
         source.connect(analyserRef.current!);
         analyserRef.current!.connect(ctx.destination);
         sourceRef.current = source;
+        connectedRef.current = true;
       } catch {
-        // Already connected — this is fine
+        // Already connected
+        connectedRef.current = true;
       }
     }
-
-    // Start the animation loop
-    const tick = () => {
-      if (analyserRef.current) {
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-        // Create a new copy to trigger React re-render
-        setFrequencyData(new Uint8Array(dataArrayRef.current));
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    // Cancel any existing loop before starting new one
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-    }
-    tick();
   }, []);
 
-  // Cleanup on unmount
+  /**
+   * Get current frequency data. Call this inside a rAF loop.
+   * Writes into the shared dataArrayRef — no allocations, no state updates.
+   */
+  const getFrequencyData = useCallback((): Uint8Array => {
+    if (analyserRef.current) {
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+    }
+    return dataArrayRef.current;
+  }, []);
+
   useEffect(() => {
     return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
+      // Cleanup on unmount only
+      if (audioCtxRef.current && audioCtxRef.current.state !== "closed") {
+        audioCtxRef.current.close();
       }
     };
   }, []);
 
-  return { frequencyData, connectAudio, binCount: BIN_COUNT };
+  return { connectAudio, getFrequencyData, binCount: BIN_COUNT };
 }

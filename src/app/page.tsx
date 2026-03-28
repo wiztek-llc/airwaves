@@ -12,7 +12,7 @@ import { useAudioAnalyzer } from "@/lib/use-audio-analyzer";
 export default function Home() {
   const [activeStation, setActiveStation] = useState(stations[0]);
   const radio = useRadio(activeStation);
-  const { frequencyData, connectAudio } = useAudioAnalyzer();
+  const { connectAudio, getFrequencyData } = useAudioAnalyzer();
 
   const isPlaying = radio.status === "playing";
   const isLoading = radio.status === "loading";
@@ -50,7 +50,7 @@ export default function Home() {
             title={track?.title}
             artist={track?.artist}
             coverUrl={track?.coverUrl}
-            frequencyData={frequencyData}
+            getFrequencyData={getFrequencyData}
           />
         </AnimatePresence>
 
