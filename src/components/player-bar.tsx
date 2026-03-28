@@ -78,7 +78,7 @@ export function PlayerBar({
                 ? `${artist} · ${formatTime(progress)} / ${formatTime(duration)}`
                 : duration > 0
                   ? `${formatTime(progress)} / ${formatTime(duration)}`
-                  : `${station.genre} · AI Generated`}
+                  : station.genre}
             </p>
           </div>
         </div>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "airwaves.fm — AI Radio",
-  description: "Infinite AI-generated music stations. Always playing, always fresh.",
+  title: "airwaves.fm",
+  description: "Infinite music stations. Always playing, always fresh.",
 };
 
 export default function RootLayout({

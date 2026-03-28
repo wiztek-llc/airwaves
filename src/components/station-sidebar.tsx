@@ -121,7 +121,7 @@ export function StationSidebar({
       {/* Footer */}
       <div className="px-6 py-4 border-t border-cream-darker/60">
         <p className="text-[10px] font-mono text-stone-lighter">
-          Powered by Lyria 3 Pro
+          airwaves.fm
         </p>
       </div>
     </aside>
