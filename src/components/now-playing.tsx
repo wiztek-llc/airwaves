@@ -136,15 +136,7 @@ export function NowPlaying({
               )}
             </motion.div>
           )}
-          {isPlaying && !isLoading && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-xs font-mono uppercase tracking-[0.15em] text-stone-lighter"
-            >
-              Track {trackNumber} of ∞
-            </motion.p>
-          )}
+          {isPlaying && !isLoading && null}
           {!isPlaying && !isLoading && (
             <p className="text-xs font-mono uppercase tracking-[0.15em] text-stone-lighter">
               {trackNumber > 0 ? "Paused" : "Press play to start"}
