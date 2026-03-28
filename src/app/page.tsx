@@ -11,11 +11,18 @@ import { useAudioAnalyzer } from "@/lib/use-audio-analyzer";
 
 export default function Home() {
   const [activeStation, setActiveStation] = useState(stations[0]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const radio = useRadio(activeStation);
   const { connectAudio, getFrequencyData } = useAudioAnalyzer();
 
   const isPlaying = radio.status === "playing";
   const isLoading = radio.status === "loading";
+
+  // Auto-play on page load
+  useEffect(() => {
+    radio.play();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Connect audio analyzer when audio element is available and playing
   useEffect(() => {
@@ -32,13 +39,15 @@ export default function Home() {
       <StationSidebar
         stations={stations}
         activeStation={activeStation}
+        isOpen={sidebarOpen}
         onSelectStation={(station) => {
           setActiveStation(station);
         }}
+        onClose={() => setSidebarOpen(false)}
       />
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col relative">
+      <main className="flex-1 flex flex-col relative min-w-0">
         <AnimatePresence mode="wait">
           <NowPlaying
             key={activeStation.id}
@@ -68,6 +77,7 @@ export default function Home() {
           onTogglePlay={() => (isPlaying ? radio.pause() : radio.play())}
           onVolumeChange={radio.setVolume}
           onSkip={radio.skip}
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
       </main>
     </div>

@@ -16,6 +16,7 @@ interface PlayerBarProps {
   onTogglePlay: () => void;
   onVolumeChange: (volume: number) => void;
   onSkip: () => void;
+  onMenuToggle?: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -38,6 +39,7 @@ export function PlayerBar({
   onTogglePlay,
   onVolumeChange,
   onSkip,
+  onMenuToggle,
 }: PlayerBarProps) {
   const progressPercent = duration > 0 ? (progress / duration) * 100 : 0;
 
@@ -55,9 +57,21 @@ export function PlayerBar({
         />
       </div>
 
-      <div className="flex items-center justify-between px-6 py-4">
-        {/* Left: Track info */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+        {/* Left: Menu button (mobile) + Track info */}
+        <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={onMenuToggle}
+            className="p-1.5 text-stone-lighter hover:text-stone transition-colors md:hidden flex-shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+
           {coverUrl ? (
             <div className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -84,13 +98,13 @@ export function PlayerBar({
         </div>
 
         {/* Center: Play controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {/* Play/Pause */}
           <motion.button
             whileTap={{ scale: 0.92 }}
             onClick={onTogglePlay}
             disabled={isLoading}
-            className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+            className={`w-11 h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-colors ${
               isLoading
                 ? "bg-stone-lighter text-cream cursor-wait"
                 : "bg-stone text-cream hover:bg-stone/90"
@@ -107,22 +121,12 @@ export function PlayerBar({
                 <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
               </svg>
             ) : isPlaying ? (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="4" width="4" height="16" rx="1" />
                 <rect x="14" y="4" width="4" height="16" rx="1" />
               </svg>
             ) : (
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="6 3 20 12 6 21 6 3" />
               </svg>
             )}
@@ -134,42 +138,20 @@ export function PlayerBar({
             disabled={isLoading}
             className="p-2 text-stone-lighter hover:text-stone transition-colors disabled:opacity-40"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="5 4 15 12 5 20 5 4" />
               <line x1="19" y1="5" x2="19" y2="19" />
             </svg>
           </button>
         </div>
 
-        {/* Right: Volume */}
-        <div className="flex items-center gap-2 flex-1 justify-end">
+        {/* Right: Volume — hidden on mobile */}
+        <div className="hidden md:flex items-center gap-2 flex-1 justify-end">
           <button className="p-2 text-stone-lighter hover:text-stone transition-colors">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              {volume > 0 && (
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              )}
-              {volume > 0.5 && (
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              )}
+              {volume > 0 && <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />}
+              {volume > 0.5 && <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />}
             </svg>
           </button>
           <input
@@ -186,8 +168,6 @@ export function PlayerBar({
               [&::-webkit-slider-thumb]:rounded-full
               [&::-webkit-slider-thumb]:bg-stone
               [&::-webkit-slider-thumb]:cursor-pointer
-              [&::-webkit-slider-thumb]:hover:bg-stone/80
-              [&::-webkit-slider-thumb]:transition-colors
             "
           />
         </div>

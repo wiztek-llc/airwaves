@@ -35,7 +35,7 @@ export function NowPlaying({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-      className="flex-1 flex flex-col items-center justify-center px-8"
+      className="flex-1 flex flex-col items-center justify-center px-4 md:px-8"
     >
       {/* Ambient glow */}
       <div
@@ -45,7 +45,7 @@ export function NowPlaying({
         }}
       />
 
-      <div className="relative z-10 flex flex-col items-center gap-8 max-w-lg w-full">
+      <div className="relative z-10 flex flex-col items-center gap-5 md:gap-8 max-w-lg w-full">
         {/* Cover art or station icon */}
         <motion.div
           initial={{ scale: 0.9 }}
@@ -54,7 +54,7 @@ export function NowPlaying({
         >
           {hasCover ? (
             <div
-              className="w-48 h-48 rounded-2xl overflow-hidden shadow-lg"
+              className="w-36 h-36 md:w-48 md:h-48 rounded-2xl overflow-hidden shadow-lg"
               style={{
                 boxShadow: `0 8px 40px ${station.color}20, 0 2px 8px rgba(0,0,0,0.08)`,
               }}
@@ -68,7 +68,7 @@ export function NowPlaying({
             </div>
           ) : (
             <div
-              className={`w-48 h-48 rounded-2xl overflow-hidden transition-opacity duration-300 ${
+              className={`w-36 h-36 md:w-48 md:h-48 rounded-2xl overflow-hidden transition-opacity duration-300 ${
                 isPlaying || isLoading ? "opacity-100" : "opacity-60"
               }`}
               style={{

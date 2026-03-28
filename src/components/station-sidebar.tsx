@@ -1,21 +1,81 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { Station } from "@/lib/stations";
 
 interface StationSidebarProps {
   stations: Station[];
   activeStation: Station;
+  isOpen: boolean;
   onSelectStation: (station: Station) => void;
+  onClose: () => void;
 }
 
 export function StationSidebar({
   stations,
   activeStation,
+  isOpen,
   onSelectStation,
+  onClose,
 }: StationSidebarProps) {
   return (
-    <aside className="w-72 border-r border-cream-darker/60 flex flex-col bg-cream-dark/30">
+    <>
+      {/* Desktop sidebar — always visible */}
+      <aside className="hidden md:flex w-72 border-r border-cream-darker/60 flex-col bg-cream-dark/30">
+        <SidebarContent
+          stations={stations}
+          activeStation={activeStation}
+          onSelectStation={onSelectStation}
+        />
+      </aside>
+
+      {/* Mobile overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-stone/20 backdrop-blur-sm z-40 md:hidden"
+              onClick={onClose}
+            />
+            {/* Slide-in panel */}
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="fixed inset-y-0 left-0 w-72 bg-cream border-r border-cream-darker/60 flex flex-col z-50 md:hidden"
+            >
+              <SidebarContent
+                stations={stations}
+                activeStation={activeStation}
+                onSelectStation={(station) => {
+                  onSelectStation(station);
+                  onClose();
+                }}
+              />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function SidebarContent({
+  stations,
+  activeStation,
+  onSelectStation,
+}: {
+  stations: Station[];
+  activeStation: Station;
+  onSelectStation: (station: Station) => void;
+}) {
+  return (
+    <>
       {/* Logo */}
       <div className="px-6 py-6 border-b border-cream-darker/60">
         <div className="flex items-center gap-2.5">
@@ -124,6 +184,6 @@ export function StationSidebar({
           airwaves.fm
         </p>
       </div>
-    </aside>
+    </>
   );
 }
