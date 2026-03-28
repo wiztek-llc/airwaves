@@ -199,6 +199,11 @@ class QueueManager {
     } finally {
       queue.generating = false;
     }
+
+    // Always try to grow the catalog in the background if under 1000 tracks
+    if (queue.r2TrackIds.length < 1000) {
+      this.generateInBackground(stationId);
+    }
   }
 
   /**
