@@ -18,7 +18,7 @@ export async function GET(request: Request) {
     return new Response(null, { status: 404 });
   }
 
-  return new Response(cover, {
+  return new Response(new Uint8Array(cover), {
     headers: {
       "Content-Type": "image/png",
       "Content-Length": cover.length.toString(),

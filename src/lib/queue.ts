@@ -343,6 +343,7 @@ class QueueManager {
     // Stage 3: Upload everything to R2 + cache in memory
     const uploads: Promise<void>[] = [
       uploadAudio(track.id, track.audio, track.mimeType)
+        .then(() => {})
         .catch((err) => console.error(`[r2] Audio upload failed:`, err)),
       uploadTrackMeta(track.id, trackMeta as unknown as Record<string, unknown>)
         .catch((err) => console.error(`[r2] Meta upload failed:`, err)),
@@ -351,6 +352,7 @@ class QueueManager {
     if (coverBuffer) {
       uploads.push(
         uploadCover(track.id, coverBuffer)
+          .then(() => {})
           .catch((err) => console.error(`[r2] Cover upload failed:`, err))
       );
       this.coverCache.set(track.id, coverBuffer);

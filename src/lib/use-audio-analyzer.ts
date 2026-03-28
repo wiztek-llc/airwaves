@@ -10,7 +10,7 @@ export function useAudioAnalyzer() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const rafRef = useRef<number>(0);
-  const dataArrayRef = useRef<Uint8Array>(new Uint8Array(BIN_COUNT));
+  const dataArrayRef = useRef(new Uint8Array(BIN_COUNT));
   const [frequencyData, setFrequencyData] = useState<Uint8Array>(
     new Uint8Array(BIN_COUNT)
   );

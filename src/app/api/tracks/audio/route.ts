@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     return new Response("Track not found", { status: 404 });
   }
 
-  return new Response(result.audio, {
+  return new Response(new Uint8Array(result.audio), {
     headers: {
       "Content-Type": result.mimeType,
       "Content-Length": result.audio.length.toString(),
